@@ -3,10 +3,13 @@ import {ApplicationConfigService} from './service/application-config.service';
 import {environment} from './environments/environment';
 import {AppService} from './service/app.service';
 import {catchError, tap} from 'rxjs';
+import {NgOptimizedImage} from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [
+    NgOptimizedImage
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -14,7 +17,7 @@ export class App implements OnInit {
   constructor(appConfig: ApplicationConfigService, private appService: AppService) {
     appConfig.setEndpointPrefix(environment.apiUrl);
   }
-
+  imageqr : any
   qrCodeBase64: string | null = null;
   name: string | null = null;
   svg:any = null;
@@ -44,8 +47,7 @@ export class App implements OnInit {
         if (svgString.startsWith('data:image/svg+xml;base64,')) {
           this.qrCodeBase64 = svgString;
         } else {
-          const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-          this.qrCodeBase64 = svgDataUrl;
+          this.qrCodeBase64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
         }
       }),
       catchError((err) => {
