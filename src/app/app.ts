@@ -1,12 +1,57 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {ApplicationConfigService} from './service/application-config.service';
+import {environment} from './environments/environment';
+import {AppService} from './service/app.service';
+import {catchError, tap} from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App {
-  protected title = 'bonus';
+export class App implements OnInit {
+  constructor(appConfig: ApplicationConfigService, private appService: AppService) {
+    appConfig.setEndpointPrefix(environment.apiUrl);
+  }
+
+  qrCodeBase64: string | null = null;
+  name: string | null = null;
+  svg:any = null;
+  ngOnInit(): void {
+    this.fetchUserIdAndGenerateQrCode();
+  }
+
+  fetchUserIdAndGenerateQrCode(): void {
+    this.appService.getUserId().pipe(
+      tap((params: any) => {
+        console.log('User ID fetched:', params.access_token);
+        this.name = params.name; // Assuming the API response includes a name field
+        this.generateQrCode(params.sub);
+      }),
+      catchError((err) => {
+        console.error('Failed to get user ID', err);
+        return [];
+      })
+    ).subscribe();
+  }
+
+  generateQrCode(id: string): void {
+    this.appService.generateQRCode(id).pipe(
+      tap((svgString: string) => {
+        this.svg = svgString
+
+        if (svgString.startsWith('data:image/svg+xml;base64,')) {
+          this.qrCodeBase64 = svgString;
+        } else {
+          const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+          this.qrCodeBase64 = svgDataUrl;
+        }
+      }),
+      catchError((err) => {
+        console.error('Failed to generate QR code', err);
+        return [];
+      })
+    ).subscribe();
+  }
 }
