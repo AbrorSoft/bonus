@@ -4,7 +4,7 @@
   @if (qrCodeBase64){
     <!-- Removed width: 100% from inline style -->
     <div class="img-container" style="display: flex; justify-content: center; align-items: center;">
-      <img class="qr-code" width="300px" height="300px" [src]="qrCodeBase64" alt="QR Code" />
+      <img class="qr-code" [src]="qrCodeBase64" alt="QR Code" />
     </div>
   } @else {
     <p>Loading QR Code...</p>
