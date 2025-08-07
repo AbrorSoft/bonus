@@ -3,21 +3,18 @@ import {ApplicationConfigService} from './service/application-config.service';
 import {environment} from './environments/environment';
 import {AppService} from './service/app.service';
 import {catchError, tap} from 'rxjs';
-import {NgOptimizedImage} from '@angular/common';
+import {DomSanitizer} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-root',
-  imports: [
-    NgOptimizedImage
-  ],
+  imports: [],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App implements OnInit {
-  constructor(appConfig: ApplicationConfigService, private appService: AppService) {
+  constructor(appConfig: ApplicationConfigService, private appService: AppService, private sanitizer: DomSanitizer) {
     appConfig.setEndpointPrefix(environment.apiUrl);
   }
-  imageqr : any
   qrCodeBase64: string | null = null;
   name: string | null = null;
   svg:any = null;
@@ -42,16 +39,20 @@ export class App implements OnInit {
   generateQrCode(id: string): void {
     this.appService.generateQRCode(id).pipe(
       tap((svgString: string) => {
-        this.svg = svgString
+        this.svg = this.sanitizer.bypassSecurityTrustHtml(svgString);
+        let base64String: string;
 
         if (svgString.startsWith('data:image/svg+xml;base64,')) {
-          this.qrCodeBase64 = svgString;
+          base64String = svgString;
         } else {
-          this.qrCodeBase64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+          base64String = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
         }
+
+        this.qrCodeBase64 = base64String;
       }),
       catchError((err) => {
         console.error('Failed to generate QR code', err);
+        this.qrCodeBase64 = ''; // fallback
         return [];
       })
     ).subscribe();
